@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Mint NeoX CyberDegens — v3</title>
+<title>Mint NeoX CyberDegens — v4</title>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
 
@@ -75,6 +75,10 @@
         white-space:pre-line;
         opacity:0.9;
     }
+    .supply {
+        margin-bottom:10px;
+        font-size:15px;
+    }
 </style>
 
 </head>
@@ -82,15 +86,18 @@
 
 <div class="header">
     <h1>Mint NeoX CyberDegens</h1>
-    <div class="version">Mint Page v3</div>
+    <div class="version">Mint Page v4 (public)</div>
 </div>
 
 <div class="mintCard">
+    <div id="supply" class="supply">Loading supply…</div>
     <p><strong>Mint Price:</strong> 10 MON</p>
+
     <p><strong>Quantity:</strong></p>
     <input type="number" id="qty" min="1" max="20" value="1">
     <br><br>
-    <button id="connectBtn">Connect Wallet (MetaMask / Phantom)</button><br>
+
+    <button id="connectBtn">Connect Wallet</button><br>
     <button id="mintBtn" disabled>Mint</button>
 
     <div id="status" class="status">Status: Idle</div>
@@ -100,7 +107,6 @@
 /* ------------------ CONFIG ------------------ */
 
 const CONTRACT_ADDRESS = "0x3902616c108f8f4b076529045aaeb338224d4da4";
-const VALID_CHAIN_IDS = [143n, 228n]; // Phantom = 143, MetaMask Monad = 228
 const RPC_URL = "https://rpc.monad.xyz";
 
 const ABI = [
@@ -110,35 +116,59 @@ const ABI = [
   "function MAX_SUPPLY() view returns (uint256)"
 ];
 
-/* --------------- UTILITY FUNCTIONS ---------------- */
+/* ---------------- UTILS ---------------- */
 
 function log(msg) {
   document.getElementById("status").textContent = msg;
 }
 
-function getInjectedProvider() {
-  // prefer phantom
+function getAnyProvider() {
+  // EIP-6963 style multi-provider
+  if (window.ethereum && Array.isArray(window.ethereum.providers)) {
+    // prefer MetaMask, then Phantom EVM, else first one
+    const list = window.ethereum.providers;
+    const mm = list.find(p => p.isMetaMask);
+    if (mm) return mm;
+    const ph = list.find(p => p.isPhantom);
+    if (ph) return ph;
+    return list[0];
+  }
+
+  // Phantom EVM
   if (window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
 
-  // prefer metamask
-  if (window.ethereum && window.ethereum.isMetaMask) return window.ethereum;
+  // Single provider case
+  if (window.ethereum) return window.ethereum;
 
-  // block brave wallet
-  if (window.ethereum && window.ethereum.isBraveWallet) return null;
-
-  // fallback
-  return window.ethereum || null;
+  return null;
 }
+
+/* ------- READ SUPPLY FROM RPC (NO WALLET NEEDED) ------- */
+
+(async () => {
+  try {
+    const rpc = new ethers.JsonRpcProvider(RPC_URL);
+    const readC = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc);
+    const minted = await readC.totalMinted();
+    const max = await readC.MAX_SUPPLY();
+    document.getElementById("supply").textContent =
+      `Minted: ${minted.toString()} / ${max.toString()}`;
+  } catch (e) {
+    document.getElementById("supply").textContent = "Minted: ? / 10000";
+  }
+})();
+
+/* ---------------- GLOBALS ---------------- */
 
 let provider, signer, contract;
 
-/* ------------------- CONNECT BUTTON ------------------- */
+/* ---------------- CONNECT BUTTON ---------------- */
 
 document.getElementById("connectBtn").onclick = async () => {
   try {
-    const injected = getInjectedProvider();
+    const injected = getAnyProvider();
     if (!injected) {
-      log("⚠ Wallet not detected. Use MetaMask or Phantom.");
+      log("⚠ No EVM wallet detected.\nUse MetaMask, Phantom, Coinbase, etc.");
       return;
     }
 
@@ -149,14 +179,13 @@ document.getElementById("connectBtn").onclick = async () => {
     signer = await provider.getSigner();
     contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
-    const net = await provider.getNetwork();
+    let chainInfo = "";
+    try {
+      const net = await provider.getNetwork();
+      chainInfo = `\nChainId detected: ${net.chainId.toString()}`;
+    } catch (_) {}
 
-    if (!VALID_CHAIN_IDS.includes(net.chainId)) {
-      log(`⚠ Wrong network.\nChainId detected: ${net.chainId}\nRequired: 143 or 228`);
-      return;
-    }
-
-    log(`✅ Connected as:\n${wallet}\nChainId: ${net.chainId}\nOK Ready to mint.`);
+    log(`✅ Connected: ${wallet}${chainInfo}\nYou can try minting now.`);
     document.getElementById("mintBtn").disabled = false;
 
   } catch (err) {
@@ -164,10 +193,15 @@ document.getElementById("connectBtn").onclick = async () => {
   }
 };
 
-/* ---------------------- MINT BUTTON -------------------- */
+/* ---------------- MINT BUTTON ---------------- */
 
 document.getElementById("mintBtn").onclick = async () => {
   try {
+    if (!contract) {
+      log("Connect wallet first.");
+      return;
+    }
+
     const qty = parseInt(document.getElementById("qty").value);
     if (!qty || qty < 1) {
       log("Enter a valid quantity.");
@@ -177,13 +211,13 @@ document.getElementById("mintBtn").onclick = async () => {
     const price = await contract.MINT_PRICE();
     const totalCost = price * BigInt(qty);
 
-    log("⏳ Sending transaction…");
+    log("⏳ Sending mint transaction…");
 
     const tx = await contract.mint(qty, { value: totalCost });
     log("⏳ Waiting for confirmation…\nTx: " + tx.hash);
 
     const receipt = await tx.wait();
-    log("✅ Minted successfully!\nTx: " + receipt.hash);
+    log("✅ Mint confirmed!\nTx: " + receipt.hash);
 
   } catch (err) {
     log("❌ Mint error:\n" + (err.reason || err.message || err));
