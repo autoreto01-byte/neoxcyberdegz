@@ -101,9 +101,9 @@
 </div>
 
 <script>
-const CONTRACT_ADDRESS = "0x3902616c108f8f4b076529045aaeb338224d4da4"; // all lowercase: no checksum issues
+const CONTRACT_ADDRESS = "0x3902616c108f8f4b076529045aaeb338224d4da4";
+const VALID_CHAIN_IDS = [143n, 228n];  // Phantom (143) + MetaMask (228)
 const MONAD_RPC = "https://rpc.monad.xyz";
-const MONAD_CHAIN_ID = 143n;
 
 const ABI = [
   "function mint(uint256 quantity) external payable",
@@ -122,14 +122,12 @@ function setMintEnabled(enabled) {
   document.getElementById("mintBtn").disabled = !enabled;
 }
 
-// pick Phantom EVM first, then MetaMask
 function getInjectedProvider() {
   if (window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
   if (window.ethereum) return window.ethereum;
   return null;
 }
 
-// supply counter using public RPC (no wallet needed)
 async function updateCounter() {
   try {
     const rpcProvider = new ethers.JsonRpcProvider(MONAD_RPC);
@@ -144,7 +142,6 @@ async function updateCounter() {
 }
 updateCounter();
 
-// connect wallet
 document.getElementById("connectBtn").onclick = async () => {
   try {
     const injected = getInjectedProvider();
@@ -161,8 +158,8 @@ document.getElementById("connectBtn").onclick = async () => {
     contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
     const network = await browserProvider.getNetwork();
-    if (network.chainId !== MONAD_CHAIN_ID) {
-      log("⚠ Wrong network. Please switch wallet to Monad Mainnet (chainId 143) and reconnect.");
+    if (!VALID_CHAIN_IDS.includes(network.chainId)) {
+      log("⚠ Wrong network.\nPlease switch to Monad Mainnet.\nAccepted chainIds: 143 or 228");
       setMintEnabled(false);
       return;
     }
@@ -174,7 +171,6 @@ document.getElementById("connectBtn").onclick = async () => {
   }
 };
 
-// mint
 document.getElementById("mintBtn").onclick = async () => {
   try {
     if (!contract) {
