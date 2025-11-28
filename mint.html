@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Mint NeoX CyberDegens</title>
+<title>Mint NeoX CyberDegens — v3</title>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
 
@@ -24,9 +24,13 @@
         font-size:32px;
         margin-bottom:8px;
     }
-    .subtitle {
-        opacity:0.85;
-        margin-bottom:4px;
+    .version {
+        color:#ff00ff;
+        font-weight:bold;
+        font-size:18px;
+        margin-top:-10px;
+        margin-bottom:20px;
+        text-shadow:0 0 10px #ff00ff;
     }
     .mintCard {
         width:440px;
@@ -38,14 +42,9 @@
         border-radius:14px;
         box-shadow:0 0 30px #0072a2, inset 0 0 25px #002b3b;
     }
-    .counter {
-        font-size:16px;
-        margin-bottom:10px;
-    }
     input {
         width:90px;
         padding:8px;
-        margin-top:6px;
         text-align:center;
         border-radius:8px;
         border:1px solid #00eaff;
@@ -83,17 +82,14 @@
 
 <div class="header">
     <h1>Mint NeoX CyberDegens</h1>
-    <p class="subtitle">Mint Price: <strong>10 MON</strong> • Network: Monad Mainnet</p>
+    <div class="version">Mint Page v3</div>
 </div>
 
 <div class="mintCard">
-    <div id="counter" class="counter">Loading supply…</div>
-
-    <p>
-        <strong>Quantity</strong><br>
-        <input type="number" id="qty" min="1" max="20" value="1">
-    </p>
-
+    <p><strong>Mint Price:</strong> 10 MON</p>
+    <p><strong>Quantity:</strong></p>
+    <input type="number" id="qty" min="1" max="20" value="1">
+    <br><br>
     <button id="connectBtn">Connect Wallet (MetaMask / Phantom)</button><br>
     <button id="mintBtn" disabled>Mint</button>
 
@@ -101,9 +97,11 @@
 </div>
 
 <script>
+/* ------------------ CONFIG ------------------ */
+
 const CONTRACT_ADDRESS = "0x3902616c108f8f4b076529045aaeb338224d4da4";
-const VALID_CHAIN_IDS = [143n, 228n];  // Phantom (143) + MetaMask (228)
-const MONAD_RPC = "https://rpc.monad.xyz";
+const VALID_CHAIN_IDS = [143n, 228n]; // Phantom = 143, MetaMask Monad = 228
+const RPC_URL = "https://rpc.monad.xyz";
 
 const ABI = [
   "function mint(uint256 quantity) external payable",
@@ -112,90 +110,81 @@ const ABI = [
   "function MAX_SUPPLY() view returns (uint256)"
 ];
 
-let browserProvider, signer, contract, walletAddress;
+/* --------------- UTILITY FUNCTIONS ---------------- */
 
 function log(msg) {
   document.getElementById("status").textContent = msg;
 }
 
-function setMintEnabled(enabled) {
-  document.getElementById("mintBtn").disabled = !enabled;
-}
-
 function getInjectedProvider() {
+  // prefer phantom
   if (window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
-  if (window.ethereum) return window.ethereum;
-  return null;
+
+  // prefer metamask
+  if (window.ethereum && window.ethereum.isMetaMask) return window.ethereum;
+
+  // block brave wallet
+  if (window.ethereum && window.ethereum.isBraveWallet) return null;
+
+  // fallback
+  return window.ethereum || null;
 }
 
-async function updateCounter() {
-  try {
-    const rpcProvider = new ethers.JsonRpcProvider(MONAD_RPC);
-    const viewContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpcProvider);
-    const minted = await viewContract.totalMinted();
-    const max = await viewContract.MAX_SUPPLY();
-    document.getElementById("counter").textContent =
-      `Minted: ${minted.toString()} / ${max.toString()}`;
-  } catch (e) {
-    document.getElementById("counter").textContent = "Minted: ? / 10000";
-  }
-}
-updateCounter();
+let provider, signer, contract;
+
+/* ------------------- CONNECT BUTTON ------------------- */
 
 document.getElementById("connectBtn").onclick = async () => {
   try {
     const injected = getInjectedProvider();
     if (!injected) {
-      log("⚠ No MetaMask / Phantom wallet detected.");
+      log("⚠ Wallet not detected. Use MetaMask or Phantom.");
       return;
     }
 
     const accounts = await injected.request({ method: "eth_requestAccounts" });
-    walletAddress = accounts[0];
+    const wallet = accounts[0];
 
-    browserProvider = new ethers.BrowserProvider(injected);
-    signer = await browserProvider.getSigner();
+    provider = new ethers.BrowserProvider(injected);
+    signer = await provider.getSigner();
     contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
-    const network = await browserProvider.getNetwork();
-    if (!VALID_CHAIN_IDS.includes(network.chainId)) {
-      log("⚠ Wrong network.\nPlease switch to Monad Mainnet.\nAccepted chainIds: 143 or 228");
-      setMintEnabled(false);
+    const net = await provider.getNetwork();
+
+    if (!VALID_CHAIN_IDS.includes(net.chainId)) {
+      log(`⚠ Wrong network.\nChainId detected: ${net.chainId}\nRequired: 143 or 228`);
       return;
     }
 
-    log("✅ Connected: " + walletAddress + "\nNetwork: Monad Mainnet");
-    setMintEnabled(true);
+    log(`✅ Connected as:\n${wallet}\nChainId: ${net.chainId}\nOK Ready to mint.`);
+    document.getElementById("mintBtn").disabled = false;
+
   } catch (err) {
     log("❌ Connect error:\n" + (err.message || err));
   }
 };
 
+/* ---------------------- MINT BUTTON -------------------- */
+
 document.getElementById("mintBtn").onclick = async () => {
   try {
-    if (!contract) {
-      log("Connect wallet first.");
-      return;
-    }
-
     const qty = parseInt(document.getElementById("qty").value);
     if (!qty || qty < 1) {
-      log("Quantity must be at least 1.");
+      log("Enter a valid quantity.");
       return;
     }
 
     const price = await contract.MINT_PRICE();
     const totalCost = price * BigInt(qty);
 
-    log("⏳ Sending mint transaction…");
+    log("⏳ Sending transaction…");
 
     const tx = await contract.mint(qty, { value: totalCost });
-    log("⏳ Tx sent: " + tx.hash + "\nWaiting for confirmation…");
+    log("⏳ Waiting for confirmation…\nTx: " + tx.hash);
 
     const receipt = await tx.wait();
-    log("✅ Mint confirmed!\nTx: " + receipt.hash);
+    log("✅ Minted successfully!\nTx: " + receipt.hash);
 
-    updateCounter();
   } catch (err) {
     log("❌ Mint error:\n" + (err.reason || err.message || err));
   }
