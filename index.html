@@ -1,113 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>NeoX CyberDegens — Home</title>
-
-<!-- Ethers v6 -->
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
-
-<style>
-    body {
-        margin:0;
-        padding:0;
-        background: radial-gradient(circle at center, #000315, #000000 80%);
-        font-family: Arial, sans-serif;
-        color:#c9faff;
-        overflow-x:hidden;
-        animation:bgPulse 10s infinite alternate;
-    }
-
-    @keyframes bgPulse {
-        0% { background-color:#000315; }
-        100% { background-color:#001022; }
-    }
-
-    .hero {
-        text-align:center;
-        padding:80px 20px;
-    }
-
-    h1 {
-        font-size:55px;
-        margin:0;
-        color:#35f0ff;
-        text-shadow:0 0 30px #00eaff, 0 0 60px #00eaff;
-    }
-
-    .desc {
-        font-size:20px;
-        max-width:700px;
-        margin:30px auto;
-        opacity:0.85;
-    }
-
-    .buttons {
-        margin-top:30px;
-    }
-
-    .btn {
-        display:inline-block;
-        padding:14px 32px;
-        margin:10px;
-        border-radius:10px;
-        background:linear-gradient(90deg,#00eaff,#007aff);
-        color:#002233;
-        font-weight:bold;
-        text-decoration:none;
-        box-shadow:0 0 25px #00d0ff;
-        transition:0.15s;
-    }
-
-    .btn:hover {
-        transform:scale(1.05);
-        box-shadow:0 0 40px #00f6ff;
-    }
-
-    .previewBox {
-        margin:60px auto;
-        width:260px;
-        padding:20px;
-        border-radius:12px;
-        border:1px solid #00eaff;
-        background:rgba(0,20,50,0.4);
-        box-shadow:0 0 30px #006a8e;
-    }
-
-    .previewBox img {
-        width:100%;
-        border-radius:8px;
-    }
-</style>
-
+  <meta charset="UTF-8">
+  <title>NeoX CyberDegens — Monad NFT Collection</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="page-wrapper">
 
-<div class="hero">
-    <h1>NeoX CyberDegens</h1>
-    <p class="desc">
-        10,000 cyberpunk degenerates living on the ultra-fast Monad Mainnet.  
-        Neon identity, AI-driven lore, and pure on-chain culture.  
-        Claim yours and join the neon underground.
-    </p>
-
-    <div class="buttons">
-        <a href="mint.html" class="btn">🔥 Mint Now</a>
-        <a href="gallery.html" class="btn">🖼 Gallery</a>
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="nav-title">NeoX CyberDegens</div>
+        <div class="nav-sub">10,000 Monad-native NeoPunks</div>
+      </div>
     </div>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="mint.html">Mint</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="about.html">Lore & Roadmap</a>
+      <a class="nav-cta" href="mint.html">Mint Now</a>
+    </nav>
+  </header>
 
-    <div class="previewBox">
-        <img id="previewImg" src="" alt="Random NFT Preview">
-        <p>Random CyberDegen Preview</p>
-    </div>
+  <main>
+    <section class="hero">
+      <div>
+        <h1 class="hero-main-title">Mint Your NeoX CyberDegen</h1>
+        <p class="hero-tagline">
+          10,000 AI-assisted pixel punks evolved for the Monad era. Neon outlines,
+          cyber implants, nightlife traits and pure degen energy — permanently etched
+          on-chain as NeoX CyberDegens.
+        </p>
+
+        <div class="hero-badges">
+          <div class="badge">10,000 Supply</div>
+          <div class="badge">Chain: Monad</div>
+          <div class="badge badge-rare">Mint: 10 MON</div>
+        </div>
+
+        <div class="hero-buttons">
+          <button class="btn-primary" onclick="location.href='mint.html'">
+            Mint Now
+          </button>
+          <button class="btn-outline" onclick="location.href='gallery.html'">
+            View Collection
+          </button>
+        </div>
+
+        <div class="hero-stats">
+          <div>
+            <div class="stat-label">Status</div>
+            <div class="stat-value">Live public mint</div>
+          </div>
+          <div>
+            <div class="stat-label">Contract</div>
+            <div class="stat-value">
+              <a href="https://monadscan.com/address/0x3902616c108f8f4b076529045aaeb338224d4da4"
+                 style="color:var(--accent);text-decoration:none;"
+                 target="_blank">
+                0x3902...d4da4
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-card">
+        <div class="hero-glow-ring"></div>
+        <div class="hero-nft-box">
+          <!-- You can replace this with a direct link to your favourite NFT image -->
+          <img src="https://bafybeifhzwiuaxbpxdcpaujo2kecbo3w5l6qmy6jy2hx3gjthk5kqoizkm.ipfs.w3s.link/418.webp"
+               alt="NeoX CyberDegen Hero">
+          <div class="hero-nft-footer">
+            <span>#418 — CyberDegen</span>
+            <span>NeoX Grid</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">What is NeoX CyberDegens?</h2>
+      <p class="section-sub">
+        NeoX CyberDegens is a generative pixel collection of 10,000 unique avatars living
+        on Monad. Each piece blends classic punk DNA with neon cyber aesthetics, nightlife
+        culture and pure on-chain degen chaos.
+      </p>
+      <p style="max-width:900px;font-size:14px;color:var(--text-main);line-height:1.6;">
+        Every NeoX is constructed from a rich trait pool: backgrounds, visors, masks, hair,
+        skin tones, chains, piercings, implants, nightlife items, addictions, and street-level
+        details. The collection is designed to feel like a living subnet of the Monad grid —
+        a place where degen punks never log off, charts never sleep and the glow of your avatar
+        is your identity.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Roadmap Snapshot</h2>
+      <p class="section-sub">Simple, clear and focused. No fake promises.</p>
+
+      <div class="roadmap-grid">
+        <div class="roadmap-card">
+          <div class="roadmap-tag">Phase 1</div>
+          <div class="roadmap-title">Genesis Mint</div>
+          <p>
+            Launch NeoX CyberDegens on Monad with a clean mint site, transparent metadata
+            and fair distribution. Early minters become the core of the NeoX grid.
+          </p>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-tag">Phase 2</div>
+          <div class="roadmap-title">Airdrops & Extras</div>
+          <p>
+            Holders can expect occasional airdrops: bonus art, derivatives, whitelist spots
+            and early access to side experiments built around the NeoX universe.
+          </p>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-tag">Phase 3</div>
+          <div class="roadmap-title">Expanded Website & Tools</div>
+          <p>
+            Extend the site with richer gallery tools, trait explorers, rarity views and
+            social integrations. Make NeoX CyberDegens easy to flex and easy to discover.
+          </p>
+        </div>
+
+        <div class="roadmap-card">
+          <div class="roadmap-tag">Phase 4</div>
+          <div class="roadmap-title">Future Staking Experiments</div>
+          <p>
+            Explore simple staking or point-based systems for NeoX holders — focusing on
+            fun, experimentation and culture, not empty “APY” marketing. Details will be
+            shared only when fully ready.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    NeoX CyberDegens · Built for degen culture on Monad · Contract:
+    <a href="https://monadscan.com/address/0x3902616c108f8f4b076529045aaeb338224d4da4"
+       target="_blank" style="color:var(--accent);text-decoration:none;">
+      0x3902...d4da4
+    </a>
+  </footer>
+
 </div>
-
-<script>
-const IMAGE_CID = "bafybeifhzwiuaxbpxdcpaujo2kecbo3w5l6qmy6jy2hx3gjthk5kqoizkm"; 
-const randomID = Math.floor(Math.random() * 500) + 1;
-document.getElementById("previewImg").src = 
-    `https://${IMAGE_CID}.ipfs.w3s.link/${randomID}.webp`;
-</script>
-
 </body>
 </html>

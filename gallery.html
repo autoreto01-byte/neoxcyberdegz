@@ -1,92 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>NeoX CyberDegens — Gallery</title>
-
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
-
-<style>
-    body {
-        background:#00020f;
-        color:#dffaff;
-        font-family:Arial;
-        margin:0;
-        padding:20px;
-    }
-
-    h1 {
-        text-align:center;
-        margin-bottom:30px;
-        color:#35f0ff;
-        text-shadow:0 0 25px #00eaff;
-    }
-
-    .grid {
-        display:grid;
-        grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
-        gap:25px;
-    }
-
-    .item {
-        background:rgba(0,25,55,0.65);
-        padding:15px;
-        border-radius:10px;
-        text-align:center;
-        border:1px solid #00eaff;
-        box-shadow:0 0 15px #003e53;
-    }
-
-    img {
-        width:100%;
-        border-radius:8px;
-    }
-
-    a {
-        color:#35f0ff;
-        text-decoration:none;
-        font-size:14px;
-    }
-</style>
-
+  <meta charset="UTF-8">
+  <title>NeoX CyberDegens Gallery</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="page-wrapper">
 
-<h1>NeoX CyberDegens — Gallery</h1>
-<div class="grid" id="grid"></div>
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="nav-title">NeoX CyberDegens</div>
+        <div class="nav-sub">Gallery</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="mint.html">Mint</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="about.html">Lore & Roadmap</a>
+      <a class="nav-cta" href="mint.html">Mint Now</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section">
+      <h2 class="section-title">NeoX CyberDegens Gallery</h2>
+      <p class="section-sub">
+        A small preview grid from the 10,000-piece collection. Images are loaded
+        directly from IPFS.
+      </p>
+    </section>
+
+    <section class="section">
+      <div id="galleryStatus" class="status" style="text-align:center;margin-bottom:14px;">
+        Loading preview…
+      </div>
+      <div id="galleryGrid" class="gallery-grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    IPFS-hosted art · Only a subset is shown here for speed. Explore everything through marketplaces or metadata.
+  </footer>
+
+</div>
 
 <script>
-const CID = "bafybeifhzwiuaxbpxdcpaujo2kecbo3w5l6qmy6jy2hx3gjthk5kqoizkm";
-const CONTRACT = "0x3902616C108F8f4B076529045AaEb338224d4dA4";
+const IMAGE_BASE = "https://bafybeifhzwiuaxbpxdcpaujo2kecbo3w5l6qmy6jy2hx3gjthk5kqoizkm.ipfs.w3s.link/";
+const METADATA_BASE = "https://bafybeid4buynlg5whh4sqq2avlf4y6cuijn3hoiudwr67sp6ufmgexotza.ipfs.w3s.link/";
 
-const ABI = [
-    "function totalMinted() view returns (uint256)"
-];
+const MAX_ITEMS = 60; // how many to show
+const START_ID = 1;   // if your ids start at 0, set 0
 
-async function loadGallery(){
-    const provider = new ethers.JsonRpcProvider("https://rpc.monad.xyz");
-    const contract = new ethers.Contract(CONTRACT, ABI, provider);
+async function loadGallery() {
+  const grid = document.getElementById("galleryGrid");
+  const status = document.getElementById("galleryStatus");
+  status.textContent = "Loading " + MAX_ITEMS + " items from IPFS…";
 
-    const total = await contract.totalMinted();
+  for (let i = START_ID; i < START_ID + MAX_ITEMS; i++) {
+    const card = document.createElement("div");
+    card.className = "gallery-card";
 
-    let html = "";
+    const img = document.createElement("img");
+    img.src = IMAGE_BASE + i + ".webp";
+    img.alt = "NeoX #" + i;
 
-    for(let i=1;i<=Number(total);i++){
-        const imgURL = `https://${CID}.ipfs.w3s.link/${i}.webp`;
+    const idLine = document.createElement("div");
+    idLine.className = "gallery-id";
+    idLine.textContent = "NeoX #" + i;
 
-        html += `
-            <div class="item">
-                <img src="${imgURL}">
-                <p>#${i}</p>
-                <a target="_blank" 
-                   href="https://opensea.io/assets/monad/${CONTRACT}/${i}">
-                   View on OpenSea
-                </a>
-            </div>
-        `;
-    }
+    const metaLine = document.createElement("div");
+    metaLine.className = "gallery-meta";
+    metaLine.textContent = "Click to open metadata";
 
-    document.getElementById("grid").innerHTML = html;
+    card.appendChild(img);
+    card.appendChild(idLine);
+    card.appendChild(metaLine);
+
+    card.onclick = () => {
+      window.open(METADATA_BASE + i + ".json", "_blank");
+    };
+
+    grid.appendChild(card);
+  }
+
+  status.textContent = "Preview loaded: " + MAX_ITEMS + " items.";
 }
 
 loadGallery();

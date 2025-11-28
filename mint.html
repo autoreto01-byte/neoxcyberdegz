@@ -1,111 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Mint NeoX CyberDegens — v4</title>
-
-<script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
-
-<style>
-    body {
-        margin:0;
-        padding:0;
-        background: radial-gradient(circle at center, #000217, #000000 80%);
-        font-family: Arial, sans-serif;
-        color:#c9faff;
-        text-align:center;
-    }
-    .header {
-        padding:40px 10px 10px;
-    }
-    h1 {
-        color:#35f0ff;
-        text-shadow:0 0 25px #00eaff,0 0 60px #00eaff;
-        font-size:32px;
-        margin-bottom:8px;
-    }
-    .version {
-        color:#ff00ff;
-        font-weight:bold;
-        font-size:18px;
-        margin-top:-10px;
-        margin-bottom:20px;
-        text-shadow:0 0 10px #ff00ff;
-    }
-    .mintCard {
-        width:440px;
-        max-width:95vw;
-        margin:30px auto 50px;
-        padding:30px 20px;
-        background:rgba(0,20,40,0.75);
-        border:1px solid #00eaff;
-        border-radius:14px;
-        box-shadow:0 0 30px #0072a2, inset 0 0 25px #002b3b;
-    }
-    input {
-        width:90px;
-        padding:8px;
-        text-align:center;
-        border-radius:8px;
-        border:1px solid #00eaff;
-        background:#001a2a;
-        color:#a9faff;
-        font-size:16px;
-    }
-    button {
-        padding:12px 30px;
-        margin-top:12px;
-        border:none;
-        border-radius:8px;
-        background:linear-gradient(90deg,#00eaff,#0095ff);
-        color:#002233;
-        font-weight:bold;
-        cursor:pointer;
-        box-shadow:0 0 20px #00d0ff;
-    }
-    button:hover { transform:scale(1.04); }
-    button:disabled {
-        opacity:0.5;
-        cursor:not-allowed;
-        box-shadow:none;
-    }
-    .status {
-        margin-top:16px;
-        font-size:13px;
-        white-space:pre-line;
-        opacity:0.9;
-    }
-    .supply {
-        margin-bottom:10px;
-        font-size:15px;
-    }
-</style>
-
+  <meta charset="UTF-8">
+  <title>Mint NeoX CyberDegens</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
 </head>
 <body>
+<div class="page-wrapper">
 
-<div class="header">
-    <h1>Mint NeoX CyberDegens</h1>
-    <div class="version">Mint Page v4 (public)</div>
-</div>
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="nav-title">NeoX CyberDegens</div>
+        <div class="nav-sub">Mint</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="mint.html">Mint</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="about.html">Lore & Roadmap</a>
+      <a class="nav-cta" href="index.html">Back</a>
+    </nav>
+  </header>
 
-<div class="mintCard">
-    <div id="supply" class="supply">Loading supply…</div>
-    <p><strong>Mint Price:</strong> 10 MON</p>
+  <main>
+    <section class="section">
+      <h2 class="section-title">Mint NeoX CyberDegens</h2>
+      <p class="section-sub">
+        Connect any EVM wallet on Monad and mint straight from this page. Mint price:
+        <strong>10 MON</strong> per NeoX.
+      </p>
 
-    <p><strong>Quantity:</strong></p>
-    <input type="number" id="qty" min="1" max="20" value="1">
-    <br><br>
+      <div id="supply" class="supply" style="text-align:center;margin-bottom:18px;">
+        Loading supply…
+      </div>
 
-    <button id="connectBtn">Connect Wallet</button><br>
-    <button id="mintBtn" disabled>Mint</button>
+      <div class="mint-card-outer">
+        <div class="mint-card">
+          <div class="mint-label">Quantity</div>
+          <input type="number" id="qty" class="mint-input" min="1" max="20" value="1">
 
-    <div id="status" class="status">Status: Idle</div>
+          <div style="margin-top:18px;">
+            <button id="connectBtn" class="btn-primary" style="width:100%;margin-bottom:8px;">
+              Connect Wallet
+            </button>
+            <button id="mintBtn" class="btn-outline" style="width:100%;" disabled>
+              Mint
+            </button>
+          </div>
+
+          <div id="status" class="status" style="margin-top:14px;">
+            Status: Idle
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Mint live on Monad · Contract:
+    <a href="https://monadscan.com/address/0x3902616c108f8f4b076529045aaeb338224d4da4"
+       target="_blank" style="color:var(--accent);text-decoration:none;">
+      0x3902...d4da4
+    </a>
+  </footer>
+
 </div>
 
 <script>
-/* ------------------ CONFIG ------------------ */
-
 const CONTRACT_ADDRESS = "0x3902616c108f8f4b076529045aaeb338224d4da4";
 const RPC_URL = "https://rpc.monad.xyz";
 
@@ -116,16 +81,12 @@ const ABI = [
   "function MAX_SUPPLY() view returns (uint256)"
 ];
 
-/* ---------------- UTILS ---------------- */
-
 function log(msg) {
   document.getElementById("status").textContent = msg;
 }
 
 function getAnyProvider() {
-  // EIP-6963 style multi-provider
   if (window.ethereum && Array.isArray(window.ethereum.providers)) {
-    // prefer MetaMask, then Phantom EVM, else first one
     const list = window.ethereum.providers;
     const mm = list.find(p => p.isMetaMask);
     if (mm) return mm;
@@ -133,18 +94,12 @@ function getAnyProvider() {
     if (ph) return ph;
     return list[0];
   }
-
-  // Phantom EVM
   if (window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
-
-  // Single provider case
   if (window.ethereum) return window.ethereum;
-
   return null;
 }
 
-/* ------- READ SUPPLY FROM RPC (NO WALLET NEEDED) ------- */
-
+// supply
 (async () => {
   try {
     const rpc = new ethers.JsonRpcProvider(RPC_URL);
@@ -158,20 +113,15 @@ function getAnyProvider() {
   }
 })();
 
-/* ---------------- GLOBALS ---------------- */
-
 let provider, signer, contract;
-
-/* ---------------- CONNECT BUTTON ---------------- */
 
 document.getElementById("connectBtn").onclick = async () => {
   try {
     const injected = getAnyProvider();
     if (!injected) {
-      log("⚠ No EVM wallet detected.\nUse MetaMask, Phantom, Coinbase, etc.");
+      log("⚠ No EVM wallet detected. Use MetaMask, Phantom, Coinbase, etc.");
       return;
     }
-
     const accounts = await injected.request({ method: "eth_requestAccounts" });
     const wallet = accounts[0];
 
@@ -185,15 +135,12 @@ document.getElementById("connectBtn").onclick = async () => {
       chainInfo = `\nChainId detected: ${net.chainId.toString()}`;
     } catch (_) {}
 
-    log(`✅ Connected: ${wallet}${chainInfo}\nYou can try minting now.`);
+    log(`✅ Connected: ${wallet}${chainInfo}\nReady to mint.`);
     document.getElementById("mintBtn").disabled = false;
-
   } catch (err) {
     log("❌ Connect error:\n" + (err.message || err));
   }
 };
-
-/* ---------------- MINT BUTTON ---------------- */
 
 document.getElementById("mintBtn").onclick = async () => {
   try {
@@ -213,12 +160,14 @@ document.getElementById("mintBtn").onclick = async () => {
 
     log("⏳ Sending mint transaction…");
 
-    const tx = await contract.mint(qty, { value: totalCost });
-    log("⏳ Waiting for confirmation…\nTx: " + tx.hash);
+    const tx = await contract.mint(qty, {
+      value: totalCost,
+      gasLimit: 250000n * BigInt(qty)
+    });
 
+    log("⏳ Waiting for confirmation…\nTx: " + tx.hash);
     const receipt = await tx.wait();
     log("✅ Mint confirmed!\nTx: " + receipt.hash);
-
   } catch (err) {
     log("❌ Mint error:\n" + (err.reason || err.message || err));
   }
