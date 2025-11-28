@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NeoX CyberDegens — Mint</title>
+<title>Mint NeoX CyberDegens</title>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
 
@@ -13,63 +13,68 @@
         background: radial-gradient(circle at center, #000217, #000000 80%);
         font-family: Arial, sans-serif;
         color:#c9faff;
-    }
-
-    .header {
         text-align:center;
-        padding:40px;
     }
-
+    .header {
+        padding:40px 10px 10px;
+    }
     h1 {
         color:#35f0ff;
-        text-shadow:0 0 25px #00eaff;
+        text-shadow:0 0 25px #00eaff,0 0 60px #00eaff;
+        font-size:32px;
+        margin-bottom:8px;
     }
-
+    .subtitle {
+        opacity:0.85;
+        margin-bottom:4px;
+    }
     .mintCard {
         width:440px;
-        margin:40px auto;
-        padding:30px;
-        background:rgba(0,20,40,0.65);
+        max-width:95vw;
+        margin:30px auto 50px;
+        padding:30px 20px;
+        background:rgba(0,20,40,0.75);
         border:1px solid #00eaff;
-        border-radius:12px;
-        box-shadow:0 0 25px #0072a2, inset 0 0 25px #002b3b;
-        text-align:center;
+        border-radius:14px;
+        box-shadow:0 0 30px #0072a2, inset 0 0 25px #002b3b;
     }
-
+    .counter {
+        font-size:16px;
+        margin-bottom:10px;
+    }
     input {
-        width:80px;
+        width:90px;
         padding:8px;
-        margin-top:12px;
+        margin-top:6px;
+        text-align:center;
+        border-radius:8px;
+        border:1px solid #00eaff;
         background:#001a2a;
         color:#a9faff;
-        border-radius:8px;
-        border:1px solid #00eaff;
-        text-align:center;
+        font-size:16px;
     }
-
     button {
-        padding:12px 32px;
-        margin-top:15px;
-        background:linear-gradient(90deg,#00eaff,#0095ff);
+        padding:12px 30px;
+        margin-top:12px;
         border:none;
         border-radius:8px;
+        background:linear-gradient(90deg,#00eaff,#0095ff);
         color:#002233;
         font-weight:bold;
         cursor:pointer;
         box-shadow:0 0 20px #00d0ff;
     }
-    button:hover { transform:scale(1.05); }
-
+    button:hover { transform:scale(1.04); }
+    button:disabled {
+        opacity:0.5;
+        cursor:not-allowed;
+        box-shadow:none;
+    }
     .status {
-        font-size:14px;
-        margin-top:20px;
+        margin-top:16px;
+        font-size:13px;
         white-space:pre-line;
         opacity:0.9;
-    }
-
-    .counter {
-        font-size:18px;
-        margin-top:15px;
     }
 </style>
 
@@ -78,95 +83,126 @@
 
 <div class="header">
     <h1>Mint NeoX CyberDegens</h1>
-    <p>Mint Price: <strong>10 MON</strong></p>
+    <p class="subtitle">Mint Price: <strong>10 MON</strong> • Network: Monad Mainnet</p>
 </div>
 
 <div class="mintCard">
+    <div id="counter" class="counter">Loading supply…</div>
 
-    <p class="counter" id="counter">Loading supply…</p>
+    <p>
+        <strong>Quantity</strong><br>
+        <input type="number" id="qty" min="1" max="20" value="1">
+    </p>
 
-    <p><strong>Quantity</strong><br>
-    <input type="number" id="qty" min="1" max="20" value="1"></p>
+    <button id="connectBtn">Connect Wallet (MetaMask / Phantom)</button><br>
+    <button id="mintBtn" disabled>Mint</button>
 
-    <button id="connectBtn">Connect Phantom</button><br><br>
-    <button id="mintBtn">Mint</button>
-
-    <div class="status" id="status">Status: Idle</div>
+    <div id="status" class="status">Status: Idle</div>
 </div>
 
 <script>
-const CONTRACT_ADDRESS = "0x3902616C108F8f4B076529045AaEb338224d4dA4";
+const CONTRACT_ADDRESS = "0x3902616c108f8f4b076529045aaeb338224d4da4"; // all lowercase: no checksum issues
+const MONAD_RPC = "https://rpc.monad.xyz";
+const MONAD_CHAIN_ID = 143n;
 
 const ABI = [
-    "function mint(uint256 quantity) external payable",
-    "function MINT_PRICE() view returns (uint256)",
-    "function totalMinted() view returns (uint256)",
-    "function MAX_SUPPLY() view returns (uint256)"
+  "function mint(uint256 quantity) external payable",
+  "function MINT_PRICE() view returns (uint256)",
+  "function totalMinted() view returns (uint256)",
+  "function MAX_SUPPLY() view returns (uint256)"
 ];
 
-let provider, signer, contract;
+let browserProvider, signer, contract, walletAddress;
 
-function log(msg){
-    document.getElementById("status").textContent = msg;
+function log(msg) {
+  document.getElementById("status").textContent = msg;
 }
 
-// auto-supply counter update
-async function updateCounter(){
-    try{
-        const tempProvider = new ethers.JsonRpcProvider("https://rpc.monad.xyz");
-        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, tempProvider);
+function setMintEnabled(enabled) {
+  document.getElementById("mintBtn").disabled = !enabled;
+}
 
-        const minted = await tempContract.totalMinted();
-        document.getElementById("counter").textContent = 
-            `Minted: ${minted} / 10000`;
-    }catch{}
+// pick Phantom EVM first, then MetaMask
+function getInjectedProvider() {
+  if (window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
+  if (window.ethereum) return window.ethereum;
+  return null;
+}
+
+// supply counter using public RPC (no wallet needed)
+async function updateCounter() {
+  try {
+    const rpcProvider = new ethers.JsonRpcProvider(MONAD_RPC);
+    const viewContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpcProvider);
+    const minted = await viewContract.totalMinted();
+    const max = await viewContract.MAX_SUPPLY();
+    document.getElementById("counter").textContent =
+      `Minted: ${minted.toString()} / ${max.toString()}`;
+  } catch (e) {
+    document.getElementById("counter").textContent = "Minted: ? / 10000";
+  }
 }
 updateCounter();
 
-function getProvider(){
-    if(window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
-    if(window.ethereum) return window.ethereum;
-    return null;
-}
+// connect wallet
+document.getElementById("connectBtn").onclick = async () => {
+  try {
+    const injected = getInjectedProvider();
+    if (!injected) {
+      log("⚠ No MetaMask / Phantom wallet detected.");
+      return;
+    }
 
-document.getElementById("connectBtn").onclick = async ()=>{
-    try{
-        const eth = getProvider();
-        if(!eth) return log("No Phantom detected.");
+    const accounts = await injected.request({ method: "eth_requestAccounts" });
+    walletAddress = accounts[0];
 
-        const accounts = await eth.request({ method:"eth_requestAccounts" });
+    browserProvider = new ethers.BrowserProvider(injected);
+    signer = await browserProvider.getSigner();
+    contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
-        provider = new ethers.BrowserProvider(eth);
-        signer   = await provider.getSigner();
-        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+    const network = await browserProvider.getNetwork();
+    if (network.chainId !== MONAD_CHAIN_ID) {
+      log("⚠ Wrong network. Please switch wallet to Monad Mainnet (chainId 143) and reconnect.");
+      setMintEnabled(false);
+      return;
+    }
 
-        const net = await provider.getNetwork();
-        if(net.chainId !== 143n) 
-            return log("Switch wallet → Monad Mainnet");
-
-        log("Connected.");
-    }catch(e){ log(e.message); }
+    log("✅ Connected: " + walletAddress + "\nNetwork: Monad Mainnet");
+    setMintEnabled(true);
+  } catch (err) {
+    log("❌ Connect error:\n" + (err.message || err));
+  }
 };
 
-document.getElementById("mintBtn").onclick = async ()=>{
-    try{
-        if(!contract) return log("Connect wallet first.");
-
-        const qty = parseInt(document.getElementById("qty").value);
-        const price = await contract.MINT_PRICE();
-        const cost  = price * BigInt(qty);
-
-        log("Sending mint…");
-
-        const tx = await contract.mint(qty, { value: cost });
-        log("Tx sent: " + tx.hash);
-
-        const receipt = await tx.wait();
-        log("Minted! Tx: " + receipt.hash);
-
-        updateCounter();
+// mint
+document.getElementById("mintBtn").onclick = async () => {
+  try {
+    if (!contract) {
+      log("Connect wallet first.");
+      return;
     }
-    catch(e){ log(e.message); }
+
+    const qty = parseInt(document.getElementById("qty").value);
+    if (!qty || qty < 1) {
+      log("Quantity must be at least 1.");
+      return;
+    }
+
+    const price = await contract.MINT_PRICE();
+    const totalCost = price * BigInt(qty);
+
+    log("⏳ Sending mint transaction…");
+
+    const tx = await contract.mint(qty, { value: totalCost });
+    log("⏳ Tx sent: " + tx.hash + "\nWaiting for confirmation…");
+
+    const receipt = await tx.wait();
+    log("✅ Mint confirmed!\nTx: " + receipt.hash);
+
+    updateCounter();
+  } catch (err) {
+    log("❌ Mint error:\n" + (err.reason || err.message || err));
+  }
 };
 </script>
 
