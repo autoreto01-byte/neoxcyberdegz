@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NeoX CyberDegens — Home</title>
+
+<!-- Ethers v6 -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
+
+<style>
+    body {
+        margin:0;
+        padding:0;
+        background: radial-gradient(circle at center, #000315, #000000 80%);
+        font-family: Arial, sans-serif;
+        color:#c9faff;
+        overflow-x:hidden;
+        animation:bgPulse 10s infinite alternate;
+    }
+
+    @keyframes bgPulse {
+        0% { background-color:#000315; }
+        100% { background-color:#001022; }
+    }
+
+    .hero {
+        text-align:center;
+        padding:80px 20px;
+    }
+
+    h1 {
+        font-size:55px;
+        margin:0;
+        color:#35f0ff;
+        text-shadow:0 0 30px #00eaff, 0 0 60px #00eaff;
+    }
+
+    .desc {
+        font-size:20px;
+        max-width:700px;
+        margin:30px auto;
+        opacity:0.85;
+    }
+
+    .buttons {
+        margin-top:30px;
+    }
+
+    .btn {
+        display:inline-block;
+        padding:14px 32px;
+        margin:10px;
+        border-radius:10px;
+        background:linear-gradient(90deg,#00eaff,#007aff);
+        color:#002233;
+        font-weight:bold;
+        text-decoration:none;
+        box-shadow:0 0 25px #00d0ff;
+        transition:0.15s;
+    }
+
+    .btn:hover {
+        transform:scale(1.05);
+        box-shadow:0 0 40px #00f6ff;
+    }
+
+    .previewBox {
+        margin:60px auto;
+        width:260px;
+        padding:20px;
+        border-radius:12px;
+        border:1px solid #00eaff;
+        background:rgba(0,20,50,0.4);
+        box-shadow:0 0 30px #006a8e;
+    }
+
+    .previewBox img {
+        width:100%;
+        border-radius:8px;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="hero">
+    <h1>NeoX CyberDegens</h1>
+    <p class="desc">
+        10,000 cyberpunk degenerates living on the ultra-fast Monad Mainnet.  
+        Neon identity, AI-driven lore, and pure on-chain culture.  
+        Claim yours and join the neon underground.
+    </p>
+
+    <div class="buttons">
+        <a href="mint.html" class="btn">🔥 Mint Now</a>
+        <a href="gallery.html" class="btn">🖼 Gallery</a>
+    </div>
+
+    <div class="previewBox">
+        <img id="previewImg" src="" alt="Random NFT Preview">
+        <p>Random CyberDegen Preview</p>
+    </div>
+</div>
+
+<script>
+const IMAGE_CID = "bafybeifhzwiuaxbpxdcpaujo2kecbo3w5l6qmy6jy2hx3gjthk5kqoizkm"; 
+const randomID = Math.floor(Math.random() * 500) + 1;
+document.getElementById("previewImg").src = 
+    `https://${IMAGE_CID}.ipfs.w3s.link/${randomID}.webp`;
+</script>
+
+</body>
+</html>

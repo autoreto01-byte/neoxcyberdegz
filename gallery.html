@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NeoX CyberDegens — Gallery</title>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
+
+<style>
+    body {
+        background:#00020f;
+        color:#dffaff;
+        font-family:Arial;
+        margin:0;
+        padding:20px;
+    }
+
+    h1 {
+        text-align:center;
+        margin-bottom:30px;
+        color:#35f0ff;
+        text-shadow:0 0 25px #00eaff;
+    }
+
+    .grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
+        gap:25px;
+    }
+
+    .item {
+        background:rgba(0,25,55,0.65);
+        padding:15px;
+        border-radius:10px;
+        text-align:center;
+        border:1px solid #00eaff;
+        box-shadow:0 0 15px #003e53;
+    }
+
+    img {
+        width:100%;
+        border-radius:8px;
+    }
+
+    a {
+        color:#35f0ff;
+        text-decoration:none;
+        font-size:14px;
+    }
+</style>
+
+</head>
+<body>
+
+<h1>NeoX CyberDegens — Gallery</h1>
+<div class="grid" id="grid"></div>
+
+<script>
+const CID = "bafybeifhzwiuaxbpxdcpaujo2kecbo3w5l6qmy6jy2hx3gjthk5kqoizkm";
+const CONTRACT = "0x3902616C108F8f4B076529045AaEb338224d4dA4";
+
+const ABI = [
+    "function totalMinted() view returns (uint256)"
+];
+
+async function loadGallery(){
+    const provider = new ethers.JsonRpcProvider("https://rpc.monad.xyz");
+    const contract = new ethers.Contract(CONTRACT, ABI, provider);
+
+    const total = await contract.totalMinted();
+
+    let html = "";
+
+    for(let i=1;i<=Number(total);i++){
+        const imgURL = `https://${CID}.ipfs.w3s.link/${i}.webp`;
+
+        html += `
+            <div class="item">
+                <img src="${imgURL}">
+                <p>#${i}</p>
+                <a target="_blank" 
+                   href="https://opensea.io/assets/monad/${CONTRACT}/${i}">
+                   View on OpenSea
+                </a>
+            </div>
+        `;
+    }
+
+    document.getElementById("grid").innerHTML = html;
+}
+
+loadGallery();
+</script>
+
+</body>
+</html>

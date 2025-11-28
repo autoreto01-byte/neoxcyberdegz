@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NeoX CyberDegens — Mint</title>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.12.0/dist/ethers.umd.min.js"></script>
+
+<style>
+    body {
+        margin:0;
+        padding:0;
+        background: radial-gradient(circle at center, #000217, #000000 80%);
+        font-family: Arial, sans-serif;
+        color:#c9faff;
+    }
+
+    .header {
+        text-align:center;
+        padding:40px;
+    }
+
+    h1 {
+        color:#35f0ff;
+        text-shadow:0 0 25px #00eaff;
+    }
+
+    .mintCard {
+        width:440px;
+        margin:40px auto;
+        padding:30px;
+        background:rgba(0,20,40,0.65);
+        border:1px solid #00eaff;
+        border-radius:12px;
+        box-shadow:0 0 25px #0072a2, inset 0 0 25px #002b3b;
+        text-align:center;
+    }
+
+    input {
+        width:80px;
+        padding:8px;
+        margin-top:12px;
+        background:#001a2a;
+        color:#a9faff;
+        border-radius:8px;
+        border:1px solid #00eaff;
+        text-align:center;
+    }
+
+    button {
+        padding:12px 32px;
+        margin-top:15px;
+        background:linear-gradient(90deg,#00eaff,#0095ff);
+        border:none;
+        border-radius:8px;
+        color:#002233;
+        font-weight:bold;
+        cursor:pointer;
+        box-shadow:0 0 20px #00d0ff;
+    }
+    button:hover { transform:scale(1.05); }
+
+    .status {
+        font-size:14px;
+        margin-top:20px;
+        white-space:pre-line;
+        opacity:0.9;
+    }
+
+    .counter {
+        font-size:18px;
+        margin-top:15px;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="header">
+    <h1>Mint NeoX CyberDegens</h1>
+    <p>Mint Price: <strong>10 MON</strong></p>
+</div>
+
+<div class="mintCard">
+
+    <p class="counter" id="counter">Loading supply…</p>
+
+    <p><strong>Quantity</strong><br>
+    <input type="number" id="qty" min="1" max="20" value="1"></p>
+
+    <button id="connectBtn">Connect Phantom</button><br><br>
+    <button id="mintBtn">Mint</button>
+
+    <div class="status" id="status">Status: Idle</div>
+</div>
+
+<script>
+const CONTRACT_ADDRESS = "0x3902616C108F8f4B076529045AaEb338224d4dA4";
+
+const ABI = [
+    "function mint(uint256 quantity) external payable",
+    "function MINT_PRICE() view returns (uint256)",
+    "function totalMinted() view returns (uint256)",
+    "function MAX_SUPPLY() view returns (uint256)"
+];
+
+let provider, signer, contract;
+
+function log(msg){
+    document.getElementById("status").textContent = msg;
+}
+
+// auto-supply counter update
+async function updateCounter(){
+    try{
+        const tempProvider = new ethers.JsonRpcProvider("https://rpc.monad.xyz");
+        const tempContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, tempProvider);
+
+        const minted = await tempContract.totalMinted();
+        document.getElementById("counter").textContent = 
+            `Minted: ${minted} / 10000`;
+    }catch{}
+}
+updateCounter();
+
+function getProvider(){
+    if(window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
+    if(window.ethereum) return window.ethereum;
+    return null;
+}
+
+document.getElementById("connectBtn").onclick = async ()=>{
+    try{
+        const eth = getProvider();
+        if(!eth) return log("No Phantom detected.");
+
+        const accounts = await eth.request({ method:"eth_requestAccounts" });
+
+        provider = new ethers.BrowserProvider(eth);
+        signer   = await provider.getSigner();
+        contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+        const net = await provider.getNetwork();
+        if(net.chainId !== 143n) 
+            return log("Switch wallet → Monad Mainnet");
+
+        log("Connected.");
+    }catch(e){ log(e.message); }
+};
+
+document.getElementById("mintBtn").onclick = async ()=>{
+    try{
+        if(!contract) return log("Connect wallet first.");
+
+        const qty = parseInt(document.getElementById("qty").value);
+        const price = await contract.MINT_PRICE();
+        const cost  = price * BigInt(qty);
+
+        log("Sending mint…");
+
+        const tx = await contract.mint(qty, { value: cost });
+        log("Tx sent: " + tx.hash);
+
+        const receipt = await tx.wait();
+        log("Minted! Tx: " + receipt.hash);
+
+        updateCounter();
+    }
+    catch(e){ log(e.message); }
+};
+</script>
+
+</body>
+</html>
